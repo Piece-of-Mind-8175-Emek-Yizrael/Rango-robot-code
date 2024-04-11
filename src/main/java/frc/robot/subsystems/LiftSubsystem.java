@@ -6,13 +6,6 @@
 package frc.robot.subsystems;
 
 
-import static frc.robot.Constants.LiftConstants.CONVERSION_FACTOR;
-import static frc.robot.Constants.LiftConstants.FOLD_MICRO_SWITCH_ID;
-import static frc.robot.Constants.LiftConstants.GROUND;
-import static frc.robot.Constants.LiftConstants.GROUND_MICRO_SWITCH_ID;
-import static frc.robot.Constants.LiftConstants.KD;
-import static frc.robot.Constants.LiftConstants.KI;
-import static frc.robot.Constants.LiftConstants.KP;
 import static frc.robot.Constants.LiftConstants.*;
 
 import com.revrobotics.CANSparkMax;
@@ -30,6 +23,7 @@ import edu.wpi.first.wpilibj.RobotController;
 // import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.Constants.GeneralFunctions;
 
 public class LiftSubsystem extends PomSubsystem {
 
@@ -54,8 +48,8 @@ public class LiftSubsystem extends PomSubsystem {
     // pid = new PIDController(/*KP*/0, KI, KD);
     encoder = liftMotor.getEncoder();
     
-    // pid.setP(KP);
-    pid.setP(0);
+    pid.setP(KP);
+    // pid.setP(0);
     pid.setI(KI);
     pid.setD(KD);
     ff= new ArmFeedforward(0, KG, 0);
@@ -67,7 +61,7 @@ public class LiftSubsystem extends PomSubsystem {
     groundMicroSwitch = new DigitalInput(GROUND_MICRO_SWITCH_ID);
     SmartDashboard.putNumber("arm motor", liftMotor.get());
     SmartDashboard.putNumber("KG", 0);
-    resetEncoder();
+    setDefaultCommand(resistGravity());
   }
 
   @Override
@@ -78,13 +72,13 @@ public class LiftSubsystem extends PomSubsystem {
     SmartDashboard.putNumber("arm encoder velocity", encoder.getVelocity());
     SmartDashboard.putBoolean("arm fold limit switch", isFoldSwitchPressed());
     SmartDashboard.putBoolean("arm ground limit switch", isGroundSwitchPressed());
-    SmartDashboard.putNumber("arm motor percantage", liftMotor.get());
+    SmartDashboard.putNumber("arm motor percantage", liftMotor.getAppliedOutput());
     SmartDashboard.putNumber("arm motor volts bus", liftMotor.getBusVoltage());
     SmartDashboard.putNumber("current kg", SmartDashboard.getNumber("KG", 0));
     SmartDashboard.putNumber("current ff", ff.calculate(getEncoderPosition(), 0));
     if(isFoldSwitchPressed())
     {
-      liftMotor.getEncoder().setPosition(-0.323);
+      liftMotor.getEncoder().setPosition(-0.313);
     }
     // if(isGroundSwitchPressed())
     // {
@@ -161,8 +155,7 @@ public class LiftSubsystem extends PomSubsystem {
   }
 
   public Command resistGravity(){
-    // return run(()-> setMotor(SmartDashboard.getNumber("KG", 0) * Math.cos(getEncoderPosition())));
-    return run(()-> move(0));
+    return run(() -> setMotor(!isFoldSwitchPressed() && !isGroundSwitchPressed() ? ff.calculate( encoder.getPosition(), 0) : 0));
   }
 
   public Command openSlow() {
@@ -172,6 +165,15 @@ public class LiftSubsystem extends PomSubsystem {
     // return run(()->setMotor(isFoldSwitchPressed() && setPoint < 0 ? 0 : /*pid.calculate(setPoint) + */ff.calculate(getEncoderPosition(), 0)));
     return run(()->setMotor(ff.calculate(getEncoderPosition(), 0)));
   }
+
+
+    public Command ArmToAngleCommand(double angle){
+      return run(() ->{
+      SmartDashboard.putNumber("Arm Setpoint", angle);
+      move(angle);
+    }).until(() -> GeneralFunctions.allowedError(encoder.getPosition(), angle, 0.005));
+    }
+
   /** stops the motor */
   public void offMotors()
   {

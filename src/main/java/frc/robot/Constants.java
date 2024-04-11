@@ -133,12 +133,12 @@ public class Constants {
         public static final int FOLD_MICRO_SWITCH_ID = 4;
         public static final int GROUND_MICRO_SWITCH_ID = 3;
         
-        public static final double KP = 0.01;
+        public static final double KP = 0.22;
         public static final double PROFILE_KP = 0.03;//CHECK!!
         public static final double KI = 0.0;
         public static final double KD = 0;
         
-        public static final double KG = 0.048;
+        public static final double KG = 0.045;
         public static final double CONVERSION_FACTOR = (1.0 / 50) * (16.0 / 42) * 2 * Math.PI;
 
         public static final double MAX_VEL = 0.5;//CHECK!!
